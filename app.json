@@ -1,37 +1,40 @@
 {
   "expo": {
     "name": "Smart Utility Toolkit",
-    "slug": "smart-utility-toolkit",
-    "version": "1.0.0",
+    "slug": "SmartUtilityToolkit",
+    "version": "2.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/utility-pic.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/utility-pic.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.smartutilitytoolkit"
+      "bundleIdentifier": "com.qais.smartutilitytoolkit"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/utility-pic.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.smartutilitytoolkit"
+      "package": "com.qais.smartutilitytoolkit",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/utility-pic.png"
     },
     "extra": {
       "eas": {
-        "projectId": "0ecad684-78ef-4f03-8a25-20d5556ca9f7"
+        "projectId": "733409f0-ed3e-497f-8266-1db51c58487f"
       }
-    }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

@@ -6,10 +6,11 @@ export default function SettingsScreen() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [notesCount, setNotesCount] = useState(0);
+  const [tasksCount, setTasksCount] = useState(0);
 
   useEffect(() => {
     loadSettings();
-    loadNotesCount();
+    loadCounts();
   }, []);
 
   const loadSettings = async () => {
@@ -23,12 +24,15 @@ export default function SettingsScreen() {
     }
   };
 
-  const loadNotesCount = async () => {
+  const loadCounts = async () => {
     try {
       const notes = await AsyncStorage.getItem('@smart_notes');
       if (notes) setNotesCount(JSON.parse(notes).length);
+      
+      const tasks = await AsyncStorage.getItem('@smart_tasks');
+      if (tasks) setTasksCount(JSON.parse(tasks).length);
     } catch (error) {
-      console.error('Error loading notes count:', error);
+      console.error('Error loading counts:', error);
     }
   };
 
@@ -51,11 +55,13 @@ export default function SettingsScreen() {
   };
 
   const clearAllData = () => {
-    Alert.alert('Clear All Data', 'This will delete all your notes. Are you sure?', [
+    Alert.alert('Clear All Data', 'This will delete all your notes and tasks. Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Clear', style: 'destructive', onPress: async () => {
           await AsyncStorage.removeItem('@smart_notes');
+          await AsyncStorage.removeItem('@smart_tasks');
           setNotesCount(0);
+          setTasksCount(0);
           Alert.alert('Success', 'All data has been cleared');
         }
       }
@@ -87,6 +93,10 @@ export default function SettingsScreen() {
           <Text style={styles.statsValue}>{notesCount}</Text>
         </View>
         <View style={styles.statsRow}>
+          <Text style={styles.statsLabel}>Total Tasks</Text>
+          <Text style={styles.statsValue}>{tasksCount}</Text>
+        </View>
+        <View style={styles.statsRow}>
           <Text style={styles.statsLabel}>Converter Types</Text>
           <Text style={styles.statsValue}>4</Text>
         </View>
@@ -100,9 +110,9 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>About</Text>
         <View style={styles.aboutCard}>
           <Text style={styles.appName}>Smart Utility Toolkit</Text>
-          <Text style={styles.version}>Version 1.0.0</Text>
+          <Text style={styles.version}>Version 2.0.0</Text>
           <Text style={styles.description}>
-            A comprehensive utility app providing unit conversion and note-taking capabilities.
+            A comprehensive utility app providing unit conversion, note-taking, and task management capabilities.
           </Text>
         </View>
       </View>

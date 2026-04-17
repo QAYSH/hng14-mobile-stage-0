@@ -7,6 +7,7 @@ const tools = [
   { id: 2, name: 'Smart Notes', icon: '📝', description: 'Save and manage your important notes', screen: 'Notes' },
   { id: 3, name: 'Currency Rates', icon: '💱', description: 'Real-time currency conversion', screen: 'Converter' },
   { id: 4, name: 'Temperature Converter', icon: '🌡️', description: 'Celsius, Fahrenheit, Kelvin', screen: 'Converter' },
+  { id: 5, name: 'Task Manager', icon: '✅', description: 'Manage your tasks and checklist', screen: 'Tasks' },
 ];
 
 export default function HomeScreen() {

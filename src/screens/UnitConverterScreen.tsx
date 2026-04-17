@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
@@ -65,7 +65,7 @@ export default function UnitConverterScreen() {
     if (inputValue) handleConvert();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const units = conversions[converterType].units;
     setFromUnit(units[0]);
     setToUnit(units[1]);
