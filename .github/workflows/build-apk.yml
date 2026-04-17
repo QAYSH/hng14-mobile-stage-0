@@ -1,10 +1,7 @@
 name: Build APK (Native Android)
 
 on:
-  # Manual trigger - you click "Run workflow" in GitHub
   workflow_dispatch:
-  
-  # Optional: Auto-build when you push code
   push:
     branches: [ main ]
 
@@ -13,43 +10,35 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # Get your code from GitHub
       - name: Checkout code
         uses: actions/checkout@v4
       
-      # Setup Node.js (Expo needs this)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
       
-      # Setup Java (Android build needs this)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
       
-      # Setup Android SDK (tools to build APK)
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       
-      # Install your project dependencies
       - name: Install dependencies
         run: npm install
       
-      # Generate Android native folder
       - name: Prebuild for Android
         run: npx expo prebuild --clean --platform android
       
-      # Build the APK
       - name: Build APK with Gradle
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
       
-      # Upload the APK so you can download it
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
