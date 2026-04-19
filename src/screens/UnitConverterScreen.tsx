@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert, 
+  Modal, 
+  Platform,
+  FlatList
+} from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme } from '../context/ThemeContext';
 
 type ConverterType = 'length' | 'weight' | 'temperature' | 'currency';
 
@@ -35,13 +47,88 @@ const conversions = {
   currency: {
     units: ['USD', 'EUR', 'GBP', 'NGN', 'JPY'],
     convert: (value: number, from: string, to: string): number => {
+      // Rates relative to 1 USD
       const rates: { [key: string]: number } = { USD: 1, EUR: 0.92, GBP: 0.79, NGN: 1480, JPY: 149.5 };
-      return (value * rates[from]) / rates[to];
+      // To convert from A to B: (value / rateA) * rateB
+      return (value / rates[from]) * rates[to];
     }
   }
 };
 
+interface UnitSelectorProps {
+  label: string;
+  value: string;
+  options: string[];
+  onSelect: (value: string) => void;
+  theme: any;
+}
+
+const UnitSelector = ({ label, value, options, onSelect, theme }: UnitSelectorProps) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  return (
+    <View style={styles.unitColumn}>
+      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
+      <TouchableOpacity 
+        style={[styles.selectorButton, { backgroundColor: theme.card, borderColor: theme.border }]}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={[styles.selectorValue, { color: theme.text }]} numberOfLines={1}>{value}</Text>
+        <Ionicons name="chevron-down" size={16} color={theme.subtext} />
+      </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Select {label}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={[
+                    styles.optionItem, 
+                    item === value && { backgroundColor: '#007AFF15' }
+                  ]}
+                  onPress={() => {
+                    onSelect(item);
+                    setModalVisible(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.optionText, 
+                    { color: theme.text },
+                    item === value && { color: '#007AFF', fontWeight: 'bold' }
+                  ]}>
+                    {item}
+                  </Text>
+                  {item === value && <Ionicons name="checkmark" size={20} color="#007AFF" />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
 export default function UnitConverterScreen() {
+  const { theme, isDarkMode } = useTheme();
   const [converterType, setConverterType] = useState<ConverterType>('length');
   const [inputValue, setInputValue] = useState('');
   const [fromUnit, setFromUnit] = useState(conversions.length.units[0]);
@@ -51,7 +138,9 @@ export default function UnitConverterScreen() {
   const handleConvert = () => {
     const value = parseFloat(inputValue);
     if (isNaN(value)) {
-      Alert.alert('Invalid Input', 'Please enter a valid number');
+      if (inputValue !== '') {
+        Alert.alert('Invalid Input', 'Please enter a valid number');
+      }
       return;
     }
     const converted = conversions[converterType].convert(value, fromUnit, toUnit);
@@ -72,58 +161,78 @@ export default function UnitConverterScreen() {
     setResult(null);
   }, [converterType]);
 
+  const getTypeIcon = (type: ConverterType) => {
+    switch(type) {
+      case 'length': return 'resize-outline';
+      case 'weight': return 'scale-outline';
+      case 'temperature': return 'thermometer-outline';
+      case 'currency': return 'cash-outline';
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.typeSelector}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
+      <View style={[styles.typeSelector, { backgroundColor: theme.card }]}>
         {(['length', 'weight', 'temperature', 'currency'] as const).map((type) => (
           <TouchableOpacity
             key={type}
             style={[styles.typeButton, converterType === type && styles.typeButtonActive]}
             onPress={() => setConverterType(type)}
           >
-            <Text style={[styles.typeText, converterType === type && styles.typeTextActive]}>
+            <Ionicons 
+              name={getTypeIcon(type) as any} 
+              size={20} 
+              color={converterType === type ? '#fff' : theme.subtext} 
+              style={{ marginBottom: 4 }}
+            />
+            <Text style={[styles.typeText, converterType === type ? styles.typeTextActive : { color: theme.subtext }]}>
               {type.charAt(0).toUpperCase() + type.slice(1)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <View style={styles.converterCard}>
-        <Text style={styles.label}>Value</Text>
+      <View style={[styles.converterCard, { backgroundColor: theme.card }]}>
+        <Text style={[styles.label, { color: theme.text }]}>Value</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: isDarkMode ? '#2A2A2A' : '#F9F9F9' }]}
           placeholder="Enter value..."
+          placeholderTextColor={theme.subtext}
           keyboardType="numeric"
           value={inputValue}
-          onChangeText={setInputValue}
+          onChangeText={(text) => {
+            setInputValue(text);
+            if (text === '') setResult(null);
+          }}
+          onBlur={handleConvert}
         />
 
         <View style={styles.unitRow}>
-          <View style={styles.unitColumn}>
-            <Text style={styles.label}>From</Text>
-            <View style={styles.pickerContainer}>
-              <Picker selectedValue={fromUnit} onValueChange={setFromUnit} style={styles.picker}>
-                {conversions[converterType].units.map((unit) => (
-                  <Picker.Item key={unit} label={unit} value={unit} />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          <UnitSelector 
+            label="From" 
+            value={fromUnit} 
+            options={conversions[converterType].units} 
+            onSelect={(val) => {
+              setFromUnit(val);
+              if (inputValue) handleConvert();
+            }}
+            theme={theme}
+          />
 
           <TouchableOpacity style={styles.swapButton} onPress={swapUnits}>
-            <Text style={styles.swapText}>⇄</Text>
+            <Ionicons name="swap-horizontal" size={20} color="#fff" />
           </TouchableOpacity>
 
-          <View style={styles.unitColumn}>
-            <Text style={styles.label}>To</Text>
-            <View style={styles.pickerContainer}>
-              <Picker selectedValue={toUnit} onValueChange={setToUnit} style={styles.picker}>
-                {conversions[converterType].units.map((unit) => (
-                  <Picker.Item key={unit} label={unit} value={unit} />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          <UnitSelector 
+            label="To" 
+            value={toUnit} 
+            options={conversions[converterType].units} 
+            onSelect={(val) => {
+              setToUnit(val);
+              if (inputValue) handleConvert();
+            }}
+            theme={theme}
+          />
         </View>
 
         <TouchableOpacity style={styles.convertButton} onPress={handleConvert}>
@@ -131,9 +240,17 @@ export default function UnitConverterScreen() {
         </TouchableOpacity>
 
         {result !== null && (
-          <View style={styles.resultContainer}>
-            <Text style={styles.resultLabel}>Result:</Text>
-            <Text style={styles.resultValue}>
+          <View style={[styles.resultContainer, { borderTopColor: theme.border }]}>
+            <Text style={[styles.resultLabel, { color: theme.subtext }]}>Result:</Text>
+            <View style={styles.resultValueContainer}>
+              <Text style={styles.resultValue}>
+                {result.toFixed(4)}
+              </Text>
+              <Text style={[styles.resultUnit, { color: theme.subtext }]}>
+                {toUnit}
+              </Text>
+            </View>
+            <Text style={[styles.formulaText, { color: theme.subtext }]}>
               {inputValue} {fromUnit} = {result.toFixed(4)} {toUnit}
             </Text>
           </View>
@@ -144,24 +261,114 @@ export default function UnitConverterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  typeSelector: { flexDirection: 'row', margin: 20, backgroundColor: '#fff', borderRadius: 12, padding: 4 },
-  typeButton: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
+  container: { flex: 1 },
+  typeSelector: { 
+    flexDirection: 'row', 
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderRadius: 20, 
+    padding: 6,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
+      android: { elevation: 3 }
+    })
+  },
+  typeButton: { 
+    flex: 1, 
+    paddingVertical: 14, 
+    alignItems: 'center', 
+    borderRadius: 16,
+    justifyContent: 'center'
+  },
   typeButtonActive: { backgroundColor: '#007AFF' },
-  typeText: { fontSize: 14, color: '#666', fontWeight: '500' },
+  typeText: { fontSize: 13, fontWeight: '700' },
   typeTextActive: { color: '#fff' },
-  converterCard: { backgroundColor: '#fff', margin: 20, padding: 20, borderRadius: 16, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-  label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 20 },
-  unitRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  converterCard: { 
+    margin: 16, 
+    padding: 24, 
+    borderRadius: 28,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 16 },
+      android: { elevation: 8 }
+    })
+  },
+  label: { fontSize: 12, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 },
+  input: { 
+    borderWidth: 1.5, 
+    borderRadius: 18, 
+    padding: 18, 
+    fontSize: 24, 
+    fontWeight: '700',
+    marginBottom: 28 
+  },
+  unitRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 24 },
   unitColumn: { flex: 1 },
-  pickerContainer: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, overflow: 'hidden' },
-  picker: { height: 50 },
-  swapButton: { marginHorizontal: 15, width: 40, height: 40, borderRadius: 20, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center' },
-  swapText: { fontSize: 20, color: '#fff' },
-  convertButton: { backgroundColor: '#007AFF', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-  convertButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  resultContainer: { marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: '#eee', alignItems: 'center' },
-  resultLabel: { fontSize: 14, color: '#666' },
-  resultValue: { fontSize: 20, fontWeight: 'bold', color: '#007AFF', marginTop: 5 },
+  selectorButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    borderWidth: 1.5, 
+    borderRadius: 14, 
+    padding: 14 
+  },
+  selectorValue: { fontSize: 15, fontWeight: '500', flex: 1 },
+  swapButton: { 
+    marginHorizontal: 12, 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: '#007AFF', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    marginBottom: 2
+  },
+  convertButton: { 
+    backgroundColor: '#007AFF', 
+    padding: 18, 
+    borderRadius: 16, 
+    alignItems: 'center', 
+    marginTop: 8,
+    ...Platform.select({
+      ios: { shadowColor: '#007AFF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+      android: { elevation: 8 }
+    })
+  },
+  convertButtonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  resultContainer: { marginTop: 24, paddingTop: 24, borderTopWidth: 1, alignItems: 'center' },
+  resultLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
+  resultValueContainer: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 },
+  resultValue: { fontSize: 32, fontWeight: '800', color: '#007AFF', marginRight: 8 },
+  resultUnit: { fontSize: 18, fontWeight: '600' },
+  formulaText: { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  
+  // Modal Styles
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'flex-end' 
+  },
+  modalContent: { 
+    borderTopLeftRadius: 32, 
+    borderTopRightRadius: 32, 
+    maxHeight: '60%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20
+  },
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 24, 
+    borderBottomWidth: 1 
+  },
+  modalTitle: { fontSize: 20, fontWeight: '700' },
+  optionItem: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 20,
+    marginHorizontal: 12,
+    marginVertical: 4,
+    borderRadius: 16
+  },
+  optionText: { fontSize: 17, fontWeight: '500' }
 });

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme } from '../context/ThemeContext';
 
 interface Note {
   id: string;
@@ -12,6 +13,7 @@ interface Note {
 }
 
 export default function NotesScreen() {
+  const { theme } = useTheme();
   const [notes, setNotes] = useState<Note[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -100,29 +102,29 @@ export default function NotesScreen() {
   };
 
   const renderNote = ({ item }: { item: Note }) => (
-    <TouchableOpacity style={styles.noteCard} onPress={() => openModal(item)}>
+    <TouchableOpacity style={[styles.noteCard, { backgroundColor: theme.card }]} onPress={() => openModal(item)}>
       <View style={styles.noteHeader}>
-        <Text style={styles.noteTitle}>{item.title}</Text>
+        <Text style={[styles.noteTitle, { color: theme.text }]}>{item.title}</Text>
         <TouchableOpacity onPress={() => deleteNote(item.id)}>
           <Ionicons name="trash-outline" size={22} color="#ff3b30" />
         </TouchableOpacity>
       </View>
-      <Text style={styles.notePreview} numberOfLines={2}>{item.content}</Text>
-      <Text style={styles.noteDate}>Updated: {formatDate(item.updatedAt)}</Text>
+      <Text style={[styles.notePreview, { color: theme.subtext }]} numberOfLines={2}>{item.content}</Text>
+      <Text style={[styles.noteDate, { color: theme.subtext }]}>Updated: {formatDate(item.updatedAt)}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
         data={notes}
         keyExtractor={(item) => item.id}
         renderItem={renderNote}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-text-outline" size={80} color="#ccc" />
-            <Text style={styles.emptyText}>No notes yet</Text>
-            <Text style={styles.emptySubtext}>Tap + to create your first note</Text>
+            <Ionicons name="document-text-outline" size={80} color={theme.border} />
+            <Text style={[styles.emptyText, { color: theme.subtext }]}>No notes yet</Text>
+            <Text style={[styles.emptySubtext, { color: theme.border }]}>Tap + to create your first note</Text>
           </View>
         }
         contentContainerStyle={notes.length === 0 ? styles.emptyList : styles.list}
@@ -133,23 +135,25 @@ export default function NotesScreen() {
       </TouchableOpacity>
 
       <Modal animationType="slide" visible={modalVisible} onRequestClose={closeModal}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{editingNote ? 'Edit Note' : 'New Note'}</Text>
+        <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>{editingNote ? 'Edit Note' : 'New Note'}</Text>
             <TouchableOpacity onPress={closeModal}>
-              <Ionicons name="close" size={28} color="#333" />
+              <Ionicons name="close" size={28} color={theme.text} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent}>
             <TextInput
-              style={styles.titleInput}
+              style={[styles.titleInput, { color: theme.text, borderColor: theme.border }]}
               placeholder="Title"
+              placeholderTextColor={theme.subtext}
               value={title}
               onChangeText={setTitle}
             />
             <TextInput
-              style={styles.contentInput}
+              style={[styles.contentInput, { color: theme.text, borderColor: theme.border }]}
               placeholder="Write your note here..."
+              placeholderTextColor={theme.subtext}
               multiline
               textAlignVertical="top"
               value={content}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 interface TaskStatsProps {
   stats: {
@@ -10,30 +11,31 @@ interface TaskStatsProps {
 }
 
 export default function TaskStats({ stats }: TaskStatsProps) {
+  const { theme } = useTheme();
   const completionRate = stats.total > 0 ? (stats.completed / stats.total) * 100 : 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={[styles.statLabel, { color: theme.subtext }]}>Total</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={[styles.statNumber, { color: '#34C759' }]}>{stats.active}</Text>
-          <Text style={styles.statLabel}>Active</Text>
+          <Text style={[styles.statLabel, { color: theme.subtext }]}>Active</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={[styles.statNumber, { color: '#007AFF' }]}>{stats.completed}</Text>
-          <Text style={styles.statLabel}>Completed</Text>
+          <Text style={[styles.statLabel, { color: theme.subtext }]}>Completed</Text>
         </View>
       </View>
       
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
+        <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
           <View style={[styles.progressFill, { width: `${completionRate}%` }]} />
         </View>
-        <Text style={styles.progressText}>{Math.round(completionRate)}% Complete</Text>
+        <Text style={[styles.progressText, { color: theme.subtext }]}>{Math.round(completionRate)}% Complete</Text>
       </View>
     </View>
   );

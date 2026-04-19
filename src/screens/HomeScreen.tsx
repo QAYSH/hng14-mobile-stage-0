@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const tools = [
   { id: 1, name: 'Unit Converter', icon: '🔄', description: 'Convert Length, Weight, Temperature & Currency', screen: 'Converter' },
@@ -12,41 +13,42 @@ const tools = [
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const { theme } = useTheme();
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.title}>Smart Utility Toolkit</Text>
         <Text style={styles.subtitle}>Your everyday companion</Text>
       </View>
 
       <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: theme.card }]}>
           <Text style={styles.statNumber}>4+</Text>
-          <Text style={styles.statLabel}>Tools</Text>
+          <Text style={[styles.statLabel, { color: theme.subtext }]}>Tools</Text>
         </View>
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: theme.card }]}>
           <Text style={styles.statNumber}>10+</Text>
-          <Text style={styles.statLabel}>Units</Text>
+          <Text style={[styles.statLabel, { color: theme.subtext }]}>Units</Text>
         </View>
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: theme.card }]}>
           <Text style={styles.statNumber}>∞</Text>
-          <Text style={styles.statLabel}>Notes</Text>
+          <Text style={[styles.statLabel, { color: theme.subtext }]}>Notes</Text>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Available Tools</Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Available Tools</Text>
       
       {tools.map((tool) => (
         <TouchableOpacity
           key={tool.id}
-          style={styles.toolCard}
+          style={[styles.toolCard, { backgroundColor: theme.card }]}
           onPress={() => navigation.navigate(tool.screen as never)}
         >
           <Text style={styles.toolIcon}>{tool.icon}</Text>
           <View style={styles.toolInfo}>
-            <Text style={styles.toolName}>{tool.name}</Text>
-            <Text style={styles.toolDescription}>{tool.description}</Text>
+            <Text style={[styles.toolName, { color: theme.text }]}>{tool.name}</Text>
+            <Text style={[styles.toolDescription, { color: theme.subtext }]}>{tool.description}</Text>
           </View>
           <Text style={styles.arrow}>→</Text>
         </TouchableOpacity>

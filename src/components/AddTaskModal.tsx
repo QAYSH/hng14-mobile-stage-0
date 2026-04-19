@@ -10,8 +10,9 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Task, TaskPriority, TaskCategory } from '../models/task';
+import { useTheme } from '../context/ThemeContext';
 
 interface AddTaskModalProps {
   visible: boolean;
@@ -21,6 +22,7 @@ interface AddTaskModalProps {
 }
 
 export default function AddTaskModal({ visible, onClose, onSave, editingTask }: AddTaskModalProps) {
+  const { theme } = useTheme();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
@@ -90,12 +92,12 @@ export default function AddTaskModal({ visible, onClose, onSave, editingTask }: 
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={28} color="#007AFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
             {editingTask ? 'Edit Task' : 'New Task'}
           </Text>
           <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
@@ -105,50 +107,52 @@ export default function AddTaskModal({ visible, onClose, onSave, editingTask }: 
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Title *</Text>
+            <Text style={[styles.label, { color: theme.subtext }]}>Title *</Text>
             <TextInput
-              style={styles.titleInput}
+              style={[styles.titleInput, { color: theme.text, backgroundColor: theme.card, borderColor: theme.border }]}
               placeholder="What needs to be done?"
               value={title}
               onChangeText={setTitle}
-              placeholderTextColor="#C6C6C8"
+              placeholderTextColor={theme.subtext}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={[styles.label, { color: theme.subtext }]}>Description</Text>
             <TextInput
-              style={styles.descriptionInput}
+              style={[styles.descriptionInput, { color: theme.text, backgroundColor: theme.card, borderColor: theme.border }]}
               placeholder="Add more details..."
               multiline
               numberOfLines={4}
               value={description}
               onChangeText={setDescription}
-              placeholderTextColor="#C6C6C8"
+              placeholderTextColor={theme.subtext}
               textAlignVertical="top"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Priority</Text>
+            <Text style={[styles.label, { color: theme.subtext }]}>Priority</Text>
             <View style={styles.priorityContainer}>
               {priorities.map((p) => (
                 <TouchableOpacity
                   key={p}
                   style={[
                     styles.priorityOption,
+                    { backgroundColor: theme.card, borderColor: theme.border },
                     priority === p && styles.priorityOptionActive,
                   ]}
                   onPress={() => setPriority(p)}
                 >
                   <Ionicons
-                    name={getPriorityIcon(p)}
+                    name={getPriorityIcon(p) as any}
                     size={20}
                     color={priority === p ? '#FFFFFF' : getPriorityColor(p)}
                   />
                   <Text
                     style={[
                       styles.priorityOptionText,
+                      { color: theme.text },
                       priority === p && styles.priorityOptionTextActive,
                     ]}
                   >
@@ -160,25 +164,27 @@ export default function AddTaskModal({ visible, onClose, onSave, editingTask }: 
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Category</Text>
+            <Text style={[styles.label, { color: theme.subtext }]}>Category</Text>
             <View style={styles.categoryContainer}>
               {categories.map((c) => (
                 <TouchableOpacity
                   key={c}
                   style={[
                     styles.categoryOption,
+                    { backgroundColor: theme.card, borderColor: theme.border },
                     category === c && styles.categoryOptionActive,
                   ]}
                   onPress={() => setCategory(c)}
                 >
                   <Ionicons
-                    name={getCategoryIcon(c)}
+                    name={getCategoryIcon(c) as any}
                     size={18}
                     color={category === c ? '#FFFFFF' : '#007AFF'}
                   />
                   <Text
                     style={[
                       styles.categoryOptionText,
+                      { color: theme.text },
                       category === c && styles.categoryOptionTextActive,
                     ]}
                   >
@@ -190,13 +196,13 @@ export default function AddTaskModal({ visible, onClose, onSave, editingTask }: 
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Due Date (Optional)</Text>
+            <Text style={[styles.label, { color: theme.subtext }]}>Due Date (Optional)</Text>
             <TouchableOpacity
-              style={styles.dateButton}
+              style={[styles.dateButton, { backgroundColor: theme.card, borderColor: theme.border }]}
               onPress={() => setShowDatePicker(true)}
             >
               <Ionicons name="calendar-outline" size={20} color="#007AFF" />
-              <Text style={styles.dateButtonText}>
+              <Text style={[styles.dateButtonText, { color: theme.text }]}>
                 {dueDate ? dueDate.toLocaleDateString() : 'Select a date'}
               </Text>
               {dueDate && (

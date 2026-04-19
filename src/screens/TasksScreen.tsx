@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  SafeAreaView,
   RefreshControl,
   Alert,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Task } from '../models/task';
-import { loadTasks, saveTasks, toggleTaskCompletion, deleteTask } from '../utils/storage';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme } from '../context/ThemeContext';
+import { Task, TaskPriority } from '../models/task';
+import { loadTasks, saveTasks, toggleTaskCompletion, deleteTask, saveTask } from '../utils/storage';
 import TaskItem from '../components/TaskItem';
 import AddTaskModal from '../components/AddTaskModal';
 import TaskStats from '../components/TasksStats';
@@ -18,6 +20,7 @@ import TaskStats from '../components/TasksStats';
 type FilterType = 'all' | 'active' | 'completed';
 
 export default function TasksScreen() {
+  const { theme } = useTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [modalVisible, setModalVisible] = useState(false);
@@ -40,6 +43,7 @@ export default function TasksScreen() {
   }, []);
 
   const handleSaveTask = async (taskData: Partial<Task>) => {
+    const now = new Date().toISOString();
     let updatedTasks: Task[];
     
     if (editingTask) {
@@ -48,7 +52,7 @@ export default function TasksScreen() {
           ? {
               ...task,
               ...taskData,
-              updatedAt: new Date().toISOString(),
+              updatedAt: now,
             } as Task
           : task
       );
@@ -61,8 +65,8 @@ export default function TasksScreen() {
         category: taskData.category || 'personal',
         dueDate: taskData.dueDate || null,
         completed: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
       };
       updatedTasks = [newTask, ...tasks];
     }
@@ -70,6 +74,7 @@ export default function TasksScreen() {
     await saveTasks(updatedTasks);
     setTasks(updatedTasks);
     setEditingTask(null);
+    setModalVisible(false);
   };
 
   const handleToggleTask = async (taskId: string) => {
@@ -88,19 +93,14 @@ export default function TasksScreen() {
           style: 'destructive',
           onPress: async () => {
             await deleteTask(taskId);
-            setTasks(await loadTasks());
+            setTasks(tasks.filter(t => t.id !== taskId));
           },
         },
       ]
     );
   };
 
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setModalVisible(true);
-  };
-
-  const getFilteredTasks = () => {
+  const filteredTasks = useMemo(() => {
     switch (filter) {
       case 'active':
         return tasks.filter(task => !task.completed);
@@ -109,20 +109,19 @@ export default function TasksScreen() {
       default:
         return tasks;
     }
-  };
+  }, [tasks, filter]);
 
-  const filteredTasks = getFilteredTasks();
-  const stats = {
+  const stats = useMemo(() => ({
     total: tasks.length,
     completed: tasks.filter(t => t.completed).length,
     active: tasks.filter(t => !t.completed).length,
-  };
+  }), [tasks]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <TaskStats stats={stats} />
       
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: theme.card }]}>
         {(['all', 'active', 'completed'] as FilterType[]).map((f) => (
           <TouchableOpacity
             key={f}
@@ -132,7 +131,7 @@ export default function TasksScreen() {
             <Text
               style={[
                 styles.filterText,
-                filter === f && styles.filterTextActive,
+                filter === f ? styles.filterTextActive : { color: theme.subtext },
               ]}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -148,18 +147,21 @@ export default function TasksScreen() {
           <TaskItem
             task={item}
             onToggle={handleToggleTask}
-            onEdit={handleEditTask}
+            onEdit={(task) => {
+              setEditingTask(task);
+              setModalVisible(true);
+            }}
             onDelete={handleDeleteTask}
           />
         )}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.text} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="checkbox-outline" size={80} color="#E5E5EA" />
-            <Text style={styles.emptyTitle}>No tasks yet</Text>
-            <Text style={styles.emptyText}>
+            <Ionicons name="checkbox-outline" size={80} color={theme.border} />
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>No tasks yet</Text>
+            <Text style={[styles.emptyText, { color: theme.subtext }]}>
               {filter === 'all'
                 ? 'Tap the + button to create your first task'
                 : filter === 'active'
@@ -190,18 +192,16 @@ export default function TasksScreen() {
         onSave={handleSaveTask}
         editingTask={editingTask}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   filterContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 8,
@@ -220,7 +220,6 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
   },
   filterTextActive: {
     color: '#FFFFFF',
@@ -240,12 +239,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8E8E93',
     marginTop: 16,
   },
   emptyText: {
     fontSize: 14,
-    color: '#C6C6C8',
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 40,
@@ -266,4 +263,4 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-});
+});

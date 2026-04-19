@@ -7,8 +7,9 @@ import {
   Animated,
   PanResponder,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Task, getPriorityColor, getCategoryIcon } from '../models/task';
+import { useTheme } from '../context/ThemeContext';
 
 interface TaskItemProps {
   task: Task;
@@ -18,6 +19,7 @@ interface TaskItemProps {
 }
 
 export default function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemProps) {
+  const { theme } = useTheme();
   const translateX = useRef(new Animated.Value(0)).current;
 
   const panResponder = useRef(
@@ -72,22 +74,22 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemP
       {...panResponder.panHandlers}
     >
       <TouchableOpacity
-        style={[styles.card, task.completed && styles.completedCard]}
+        style={[styles.card, { backgroundColor: theme.card }, task.completed && styles.completedCard]}
         onPress={() => onEdit(task)}
         activeOpacity={0.7}
       >
         <View style={styles.leftSection}>
           <TouchableOpacity onPress={() => onToggle(task.id)} style={styles.checkbox}>
             <Ionicons
-              name={task.completed ? 'checkbox' : 'square-outline'}
+              name={task.completed ? 'checkbox' as any : 'square-outline' as any}
               size={24}
-              color={task.completed ? '#34C759' : '#8E8E93'}
+              color={task.completed ? '#34C759' : theme.subtext}
             />
           </TouchableOpacity>
           
           <View style={styles.content}>
             <View style={styles.titleRow}>
-              <Text style={[styles.title, task.completed && styles.completedText]}>
+              <Text style={[styles.title, { color: theme.text }, task.completed && styles.completedText]}>
                 {task.title}
               </Text>
               <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(task.priority) + '20' }]}>
@@ -99,15 +101,15 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemP
             </View>
             
             {task.description ? (
-              <Text style={[styles.description, task.completed && styles.completedText]} numberOfLines={2}>
+              <Text style={[styles.description, { color: theme.subtext }, task.completed && styles.completedText]} numberOfLines={2}>
                 {task.description}
               </Text>
             ) : null}
             
             <View style={styles.metaRow}>
               <View style={styles.metaItem}>
-                <Ionicons name={getCategoryIcon(task.category)} size={14} color="#8E8E93" />
-                <Text style={styles.metaText}>{task.category}</Text>
+                <Ionicons name={getCategoryIcon(task.category) as any} size={14} color={theme.subtext} />
+                <Text style={[styles.metaText, { color: theme.subtext }]}>{task.category}</Text>
               </View>
               
               {task.dueDate && (
@@ -115,9 +117,9 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemP
                   <Ionicons 
                     name="calendar-outline" 
                     size={14} 
-                    color={isOverdue() ? '#FF3B30' : '#8E8E93'} 
+                    color={isOverdue() ? '#FF3B30' : theme.subtext} 
                   />
-                  <Text style={[styles.metaText, isOverdue() && styles.overdueText]}>
+                  <Text style={[styles.metaText, { color: theme.subtext }, isOverdue() && styles.overdueText]}>
                     {formatDate(task.dueDate)}
                     {isOverdue() ? ' (Overdue)' : ''}
                   </Text>
@@ -127,7 +129,7 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemP
           </View>
         </View>
         
-        <Ionicons name="chevron-forward" size={20} color="#C6C6C8" />
+        <Ionicons name="chevron-forward" size={20} color={theme.border} />
       </TouchableOpacity>
     </Animated.View>
   );
